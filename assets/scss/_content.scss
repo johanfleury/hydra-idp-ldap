@@ -1,0 +1,25 @@
+#content {
+  margin-top: 3rem;
+
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  #login-form {
+    height: auto;
+    margin: 0 auto;
+
+    border-radius: 50%;
+
+    @media (min-width: 576px) {
+      max-width: 50%;
+    }
+
+    @media (min-width: 768px) {
+      width: 40%;
+    }
+
+    #submit {
+      margin-top: 2em;
+    }
+  }
+}

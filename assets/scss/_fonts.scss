@@ -1,0 +1,43 @@
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lato Regular'),
+       local('Lato-Regular'),
+       url('/static/fonts/lato-v16-latin-regular.woff2') format('woff2'),
+       url('/static/fonts/lato-v16-latin-regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lato Bold'),
+       local('Lato-Bold'),
+       url('/static/fonts/lato-v16-latin-700.woff2') format('woff2'),
+       url('/static/fonts/lato-v16-latin-700.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Source Sans Pro Regular'),
+       local('SourceSansPro-Regular'),
+       url('/static/fonts/source-sans-pro-v13-latin-regular.woff2') format('woff2'),
+       url('/static/fonts/source-sans-pro-v13-latin-regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Source Sans Pro Bold'),
+       local('SourceSansPro-Bold'),
+       url('/static/fonts/source-sans-pro-v13-latin-700.woff2') format('woff2'),
+       url('/static/fonts/source-sans-pro-v13-latin-700.woff') format('woff');
+}

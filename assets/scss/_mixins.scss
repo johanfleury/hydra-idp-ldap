@@ -1,0 +1,18 @@
+@mixin heading {
+  font-family: $font-heading;
+  font-weight: 700;
+
+  a {
+    @include heading-link;
+  }
+}
+
+@mixin heading-link {
+  color: $color-fg;
+
+  &:focus,
+  &:hover {
+    color: $color-link;
+    text-decoration: none;
+  }
+}

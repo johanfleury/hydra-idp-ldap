@@ -1,0 +1,32 @@
+{% extends "base" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div id="login-form" class="p-4 shadow-lg rounded">
+  {% if form_error %}
+  <div class="alert alert-danger mb-4" role="alert">
+    {{ form_error }}
+  </div>
+  {% endif %}
+
+  <form class="form" method="post">
+    <div class="form-group">
+      <label for="login" class="sr-only">Username or email address</label>
+      <input id="login" name="login" type="text" class="form-control" placeholder="Username or email address" required autofocus>
+    </div>
+
+    <div class="form-group">
+      <label for="password" class="sr-only">Password</label>
+      <input id="password" name="password" type="password" class="form-control" placeholder="Password" required>
+    </div>
+
+    <div class="form-group form-check">
+      <input id="remember" name="remember" type="checkbox" class="form-check-input">
+      <label for="remember" class="form-check-label">Remember me</label>
+    </div>
+
+    <input id="submit" type="submit" class="btn btn-block btn-primary" value="Log In">
+  </form>
+</div>
+{% endblock %}

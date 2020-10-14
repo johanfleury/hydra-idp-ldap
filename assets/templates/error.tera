@@ -1,0 +1,16 @@
+{% extends "base" %}
+
+{% block title %}Error - {{ name }}{% endblock %}
+
+{% block content %}
+<div class="text-center">
+  <h1>{{ name }}</h1>
+  <p class="lead">
+    {{ description }}
+  </p>
+  <p>
+    {{ hint }}
+  </p>
+</div>
+
+{% endblock %}

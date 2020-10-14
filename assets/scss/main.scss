@@ -1,0 +1,41 @@
+@import "variables";
+@import "mixins";
+@import "fonts";
+@import "content";
+
+body {
+  font-family: $font-text;
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @include heading;
+}
+
+a {
+  color: #0056b3;
+
+  &:hover,
+  &:focus {
+    color: #0056b3;
+  }
+}
+
+.fas,
+.fab {
+  font-weight: 900;
+}
+
+.list-inline.separator {
+  .list-inline-item {
+    &:not(:last-child):after {
+      margin-left: 0.5rem;
+      content: "⋅";
+    }
+  }
+}

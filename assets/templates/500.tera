@@ -1,0 +1,14 @@
+{% extends "base" %}
+
+{% block title %}Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="text-center">
+  <h1>Internal Server Error</h1>
+  <p class="lead">
+    Sorry, the server encountered an internal error while processing this request.
+    <br />
+    Please contact the site administrator.
+  </p>
+</div>
+{% endblock %}

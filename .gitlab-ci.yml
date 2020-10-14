@@ -9,13 +9,22 @@ services:
 
 stages:
   - test
+  - build
   - docker:build
   - docker:publish
 
+.rust: &rust
+  image: rust:latest
+  cache:
+    paths:
+      - .cargo/
+      - target/
+
 test:fmt:
   stage: test
-  image: rust:latest
+  <<: *rust
   before_script:
+    - export CARGO_HOME="$(pwd)/.cargo"
     - rustup default nightly
     - rustup component add rustfmt
   script:
@@ -23,8 +32,9 @@ test:fmt:
 
 test:lint:
   stage: test
-  image: rust:latest
+  <<: *rust
   before_script:
+    - export CARGO_HOME="$(pwd)/.cargo"
     - rustup default nightly
     - rustup component add clippy
   script:
@@ -32,21 +42,39 @@ test:lint:
 
 test:unit:
   stage: test
-  image: rust:latest
+  <<: *rust
   before_script:
+    - export CARGO_HOME="$(pwd)/.cargo"
     - rustup default nightly
   script:
     - cargo +nightly test
+
+build:
+  stage: build
+  <<: *rust
+  before_script:
+    - export CARGO_HOME="$(pwd)/.cargo"
+    - rustup default nightly
+    - apt-get -qq update
+    - apt-get -qq install pysassc python3-pkg-resources
+  script:
+    - cargo +nightly build --release
+    - mkdir -p build/ build/assets/
+    - cp target/release/hydra-idp-ldap build/
+    - cp -r assets/static/ build/assets/
+    - cp -r assets/templates/ build/assets/
+    - pysassc --sourcemap -t compressed assets/scss/main.scss build/assets/static/css/main.css
+  artifacts:
+    name: "hydra-idp-ldap-${CI_COMMIT_TAG:-${CI_COMMIT_SHA}}"
+    paths:
+      - build
 
 docker-build:
   stage: docker:build
   image: docker:19.03
   only:
-    - branches
+    - main
     - tags
-  before_script:
-    - docker info
-    - mkdir -p docker-build/$(dirname ${DOCKER_IMAGE_NAME})
   script:
     - docker build -t ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} .
     - test -n "${CI_COMMIT_TAG}" && docker tag ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} ${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}
@@ -55,7 +83,7 @@ docker-push:
   stage: docker:publish
   image: docker:19.03
   only:
-    - branches
+    - main
     - tags
   before_script:
     - docker login -u $[DOCKER_REGISTRY_USER} -p ${DOCKER_REGISTRY_PASSWORD} ${DOCKER_REGISTRY}

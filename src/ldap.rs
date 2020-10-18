@@ -34,45 +34,55 @@ pub enum Error {
 #[derive(Debug, StructOpt)]
 pub struct Opts {
     #[structopt(
+        name = "ldap.url",
         long = "ldap.url",
         env = "LDAP_URL",
         hide_env_values = true,
+        value_name = "url",
         help = "URL to the LDAP server (example: ldap://ldap.example.org:389)",
         display_order = 40
     )]
     url: Url,
 
     #[structopt(
+        name = "ldap.bind-dn",
         long = "ldap.bind-dn",
         env = "LDAP_BIND_DN",
         hide_env_values = true,
+        value_name = "string",
         help = "LDAP DN to bind to",
         display_order = 41
     )]
     bind_dn: String,
 
     #[structopt(
+        name = "ldap.bind-pw",
         long = "ldap.bind-pw",
         env = "LDAP_BIND_PW",
         hide_env_values = true,
+        value_name = "string",
         help = "LDAP bind DN password",
         display_order = 42
     )]
     bind_pw: String,
 
     #[structopt(
+        name = "ldap.base-dn",
         long = "ldap.base-dn",
         env = "LDAP_BASE_DN",
         hide_env_values = true,
+        value_name = "string",
         help = "Base DN to search for users",
         display_order = 43
     )]
     base_dn: String,
 
     #[structopt(
+        name = "ldap.user-filter",
         long = "ldap.user-filter",
         env = "LDAP_USER_FILTER",
         hide_env_values = true,
+        value_name = "string",
         default_value = "(&(objectClass=inetOrgPerson)(|(uid={login})(mail={login})))",
         help = "Default search filter for user (the special string `{login}` will be replaced by \
                 the user’s provided login)",

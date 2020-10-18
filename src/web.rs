@@ -36,9 +36,11 @@ const TEMPLATE_DIR: &str = "templates/";
 #[derive(Debug, StructOpt)]
 pub struct Opts {
     #[structopt(
+        name = "web.listen-address",
         long = "web.listen-address",
         env = "WEB_LISTEN_ADDRESS",
         hide_env_values = true,
+        value_name = "address",
         parse(try_from_str = parse::sock_addr),
         default_value = "0.0.0.0:8080",
         help = "Address to listen on (in the form <ip>:<port>)",
@@ -47,14 +49,15 @@ pub struct Opts {
     listen_address: SocketAddr,
 
     #[structopt(
-        name = "tls-cert-file",
+        name = "web.tls-cert-file",
         long = "web.tls-cert-file",
         env = "WEB_TLS_CERT_FILE",
         hide_env_values = true,
+        value_name = "file",
         requires = "web.tls-key-file",
         help = "Path to a certificate chain file in PEM format (enables TLS)",
         parse(try_from_str = parse::file),
-        display_order = 20,
+        display_order = 21,
     )]
     tls_cert_file: Option<String>,
 
@@ -63,21 +66,24 @@ pub struct Opts {
         long = "web.tls-key-file",
         env = "WEB_TLS_KEY_FILE",
         hide_env_values = true,
+        value_name = "file",
         parse(try_from_str = parse::file),
         requires = "web.tls-cert-file",
         help = "Path to a private key file in PEM format (enables TLS)",
-        display_order = 20,
+        display_order = 22,
     )]
     tls_key_file: Option<String>,
 
     #[structopt(
+        name = "web.base-path",
         long = "web.base-path",
         env = "WEB_BASE_PATH",
         hide_env_values = true,
+        value_name = "string",
         parse(try_from_str = parse::path),
         default_value = "/",
         help = "Path prefix for endpoints",
-        display_order = 21,
+        display_order = 23,
     )]
     base_path: String,
 
@@ -88,9 +94,11 @@ pub struct Opts {
 #[derive(Debug, StructOpt)]
 pub struct OauthOpts {
     #[structopt(
+        name = "oauth.login-remember-for",
         long = "oauth.login-remember-for",
         env = "OAUTH_LOGIN_REMEMBER_FOR",
         hide_env_values = true,
+        value_name = "integer",
         default_value = "0",
         help = "Time in seconds defining how long a sucessful login should be remembered (0 means \
                 it will be until browser tab or window is closed).",
@@ -99,9 +107,11 @@ pub struct OauthOpts {
     login_remember_for: u64,
 
     #[structopt(
+        name = "oauth.attrs-map",
         long = "oauth.attrs-map",
         env = "OAUTH_ATTRS_MAP",
         hide_env_values = true,
+        value_name = "map",
         parse(try_from_str = parse::comma_separated_key_value),
         default_value = "cn:name,sn:family_name,givenName:given_name,mail:email",
         help = "A list of comma separated <LDAP attribute name>:<OAuth claim name>",
@@ -110,9 +120,11 @@ pub struct OauthOpts {
     attrs_map: HashMap<String, String>,
 
     #[structopt(
+        name = "oauth.claims-map",
         long = "oauth.claims-map",
         env = "OAUTH_CLAIMS_MAP",
         hide_env_values = true,
+        value_name = "map",
         parse(try_from_str = parse::comma_separated_key_value),
         default_value = "name:profile,family_name:profile,given_name:profile,email:email",
         help = "A list of comma separated <OAuth claim name>:<OAuth scope name>",

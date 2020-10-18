@@ -39,9 +39,11 @@ use crate::logger::Logger;
 #[structopt(set_term_width = 0)]
 struct Opts {
     #[structopt(
+        name = "log.level",
         long = "log.level",
         env = "LOG_LEVEL",
         hide_env_values = true,
+        value_name = "string",
         possible_values = &["off", "error", "warn", "info", "debug", "trace"],
         case_insensitive = true,
         default_value = "info",
@@ -54,9 +56,11 @@ struct Opts {
     web: web::Opts,
 
     #[structopt(
+        name = "hydra.url",
         long = "hydra.url",
         env = "HYDRA_URL",
         hide_env_values = true,
+        value_name = "url",
         help = "URL of the Hydra admin server",
         display_order = 30
     )]

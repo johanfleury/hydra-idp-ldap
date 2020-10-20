@@ -30,8 +30,8 @@ use structopt::StructOpt;
 use crate::ldap::LDAP;
 use crate::parse;
 
-const STATIC_DIR: &str = "static/";
-const TEMPLATE_DIR: &str = "templates/";
+const STATIC_DIR: &str = "assets/static/";
+const TEMPLATE_DIR: &str = "assets/templates/";
 
 #[derive(Debug, StructOpt)]
 pub struct Opts {

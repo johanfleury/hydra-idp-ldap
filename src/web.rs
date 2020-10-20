@@ -340,7 +340,7 @@ fn consent(
         let claim_name = match oauth_opts.attrs_map.get(&attr_name) {
             Some(claim_name) => claim_name,
             None => {
-                debug!("skiping attribute '{}' not mapped to a claim", attr_name);
+                debug!("Skiping attribute '{}' not mapped to a claim", attr_name);
                 continue;
             }
         };
@@ -348,18 +348,23 @@ fn consent(
         let claim_scope = match oauth_opts.claims_map.get(claim_name) {
             Some(claim_scope) => claim_scope,
             None => {
-                debug!("skiping claim '{}' not mapped to a scope", claim_name);
+                debug!("Skiping claim '{}' not mapped to a scope", claim_name);
                 continue;
             }
         };
 
         if !r.requested_scope.contains(claim_scope) {
             debug!(
-                "skiping claim '{}' as client didn’t request scope '{}'",
+                "Skiping claim '{}' as client didn’t request scope '{}'",
                 claim_name, claim_scope
             );
             continue;
         }
+
+        debug!(
+            "Mapping attribute '{}' to claim '{}' for scope '{}' with value '{}'",
+            attr_name, claim_name, claim_scope, attr_value
+        );
 
         claims.insert(claim_name.to_string(), attr_value);
     }

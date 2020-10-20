@@ -7,11 +7,12 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
-hydra-client = "0.2"
+hydra-client = "0.3"
 ldap3 = "0.7"
 log = "0.4"
 rocket = { version = "0.4.5", features = ["tls"] }
 rocket_contrib = { version = "0.4.5", features = ["tera_templates"] }
+serde_json = "1.0"
 structopt = "0.3"
 thiserror = "1.0"
 url = "2.1"

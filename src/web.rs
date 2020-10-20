@@ -22,6 +22,7 @@ use rocket::response::Redirect;
 use rocket::{Request, State};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::Path;
@@ -254,7 +255,7 @@ fn post_login(
         }
     };
 
-    match ldap.validate_credentials(attrs["dn"].as_str(), form.password.as_str()) {
+    match ldap.validate_credentials(attrs["dn"].as_str().unwrap(), form.password.as_str()) {
         Ok(ok) => {
             if !ok {
                 info!("Invalid login or password for {}", form.login);
@@ -312,8 +313,6 @@ fn consent(
         }
     };
 
-    let mut claims: HashMap<String, String> = HashMap::new();
-
     let attrs = match ldap.get_user_attrs(
         r.subject.as_str(),
         oauth_opts.attrs_map.keys().cloned().collect(),
@@ -326,6 +325,10 @@ fn consent(
             )));
         }
     };
+
+    let mut claims: HashMap<String, Value> = HashMap::new();
+    // The groups claim is added regardless of what scopes are requested.
+    claims.insert("groups".to_string(), attrs["groups"].clone());
 
     for (attr_name, attr_value) in attrs {
         let claim_name = match oauth_opts.attrs_map.get(&attr_name) {
@@ -348,10 +351,11 @@ fn consent(
             debug!(
                 "skiping claim '{}' as client didn’t request scope '{}'",
                 claim_name, claim_scope
-            )
+            );
+            continue;
         }
 
-        claims.insert(claim_name.to_string(), attr_value.to_string());
+        claims.insert(claim_name.to_string(), attr_value);
     }
 
     match hydra.accept_consent_request(

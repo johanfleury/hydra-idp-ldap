@@ -13,7 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use ldap3::{LdapConn, LdapError, Scope, SearchEntry};
+use ldap3::{LdapConn, LdapError, ResultEntry, Scope, SearchEntry};
+use serde_json::json;
+use serde_json::value::Value;
 use std::collections::HashMap;
 use structopt::StructOpt;
 use thiserror::Error;
@@ -67,36 +69,62 @@ pub struct Opts {
     bind_pw: String,
 
     #[structopt(
-        name = "ldap.base-dn",
-        long = "ldap.base-dn",
-        env = "LDAP_BASE_DN",
+        name = "ldap.users-dn",
+        long = "ldap.users-dn",
+        env = "LDAP_USERS_DN",
         hide_env_values = true,
         value_name = "string",
         help = "Base DN to search for users",
         display_order = 43
     )]
-    base_dn: String,
+    users_dn: String,
 
     #[structopt(
-        name = "ldap.user-filter",
-        long = "ldap.user-filter",
-        env = "LDAP_USER_FILTER",
+        name = "ldap.users-filter",
+        long = "ldap.users-filter",
+        env = "LDAP_USERS_FILTER",
         hide_env_values = true,
         value_name = "string",
         default_value = "(&(objectClass=inetOrgPerson)(|(uid={login})(mail={login})))",
-        help = "Default search filter for user (the special string `{login}` will be replaced by \
-                the user’s provided login)",
+        help = "Search filter for users (the special string `{login}` will be replaced by the \
+                user’s provided login)",
         display_order = 44
     )]
-    user_filter: String,
+    users_filter: String,
+
+    #[structopt(
+        name = "ldap.groups-dn",
+        long = "ldap.groups-dn",
+        env = "LDAP_GROUPS_DN",
+        hide_env_values = true,
+        value_name = "string",
+        help = "Base DN to search for groups",
+        display_order = 45
+    )]
+    groups_dn: Option<String>,
+
+    #[structopt(
+        name = "ldap.groups-filter",
+        long = "ldap.groups-filter",
+        env = "LDAP_GROUPS_FILTER",
+        hide_env_values = true,
+        value_name = "string",
+        default_value = "(&(objectClass=groupOfNames)(member={user_dn}))",
+        help = "Search filter for groups (the special string `{user_dn}` will be replaced by the \
+                user’s DN)",
+        display_order = 46
+    )]
+    groups_filter: String,
 }
 
 pub struct LDAP {
     url: Url,
     bind_dn: String,
     bind_pw: String,
-    base_dn: String,
-    user_filter: String,
+    users_dn: String,
+    users_filter: String,
+    groups_dn: Option<String>,
+    groups_filter: String,
 }
 
 impl LDAP {
@@ -105,8 +133,10 @@ impl LDAP {
             url: opts.url,
             bind_dn: opts.bind_dn,
             bind_pw: opts.bind_pw,
-            base_dn: opts.base_dn,
-            user_filter: opts.user_filter,
+            users_dn: opts.users_dn,
+            users_filter: opts.users_filter,
+            groups_dn: opts.groups_dn,
+            groups_filter: opts.groups_filter,
         }
     }
 
@@ -114,33 +144,28 @@ impl LDAP {
         &self,
         login: &str,
         attrs: Vec<String>,
-    ) -> Result<HashMap<String, String>, Error> {
-        let mut conn = self.authenticate(self.bind_dn.as_str(), self.bind_pw.as_str())?;
+    ) -> Result<HashMap<String, Value>, Error> {
+        let filter: String = self.users_filter.replace("{login}", login);
 
-        let user_filter: String = self.user_filter.replace("{login}", login);
-
-        let (entries, _) = conn
-            .search(
-                self.base_dn.as_str(),
-                Scope::Subtree,
-                user_filter.as_str(),
-                attrs,
-            )?
-            .success()?;
+        let entries = self.search(self.users_dn.as_str(), filter.as_str(), attrs)?;
 
         if let Some(entry) = entries.first() {
             let entry = SearchEntry::construct(entry.clone());
 
-            let mut h: HashMap<String, String> = HashMap::new();
-            h.insert("dn".to_string(), entry.dn);
+            let mut h: HashMap<String, Value> = HashMap::new();
+            h.insert("dn".to_string(), json!(entry.dn));
 
             for (attr, values) in entry.attrs {
                 let value = match values.len() {
                     1 => values[0].clone(),
                     _ => values.join(","),
                 };
-                h.insert(attr, value);
+                h.insert(attr, json!(value));
             }
+
+            let groups = self.get_user_groups(entry.dn.as_str())?;
+            h.insert("groups".to_string(), json!(groups));
+
             Ok(h)
         } else {
             Err(Error::UserNotFound(login.to_string()))
@@ -170,5 +195,46 @@ impl LDAP {
         } else {
             Ok(conn)
         }
+    }
+
+    fn get_user_groups(&self, user_dn: &str) -> Result<Vec<String>, Error> {
+        let base_dn = match self.groups_dn.clone() {
+            Some(dn) => dn,
+            None => {
+                debug!("Skipping searching for groups as groups search DN is not set");
+                return Ok(vec![]);
+            }
+        };
+
+        let filter: String = self.groups_filter.replace("{user_dn}", user_dn);
+
+        let mut groups: Vec<String> = vec![];
+
+        for entry in self.search(base_dn.as_str(), filter.as_str(), vec!["cn".to_string()])? {
+            let entry = SearchEntry::construct(entry.clone());
+
+            for (attr, values) in entry.attrs {
+                if attr == "cn" {
+                    groups.push(values[0].clone());
+                }
+            }
+        }
+
+        Ok(groups)
+    }
+
+    fn search(
+        &self,
+        base_dn: &str,
+        filter: &str,
+        attrs: Vec<String>,
+    ) -> Result<Vec<ResultEntry>, Error> {
+        let mut conn = self.authenticate(self.bind_dn.as_str(), self.bind_pw.as_str())?;
+
+        let (entries, _) = conn
+            .search(base_dn, Scope::Subtree, filter, attrs)?
+            .success()?;
+
+        Ok(entries)
     }
 }

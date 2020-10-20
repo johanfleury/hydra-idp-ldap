@@ -31,6 +31,8 @@ use structopt::StructOpt;
 use crate::ldap::LDAP;
 use crate::parse;
 
+mod health;
+
 const STATIC_DIR: &str = "assets/static/";
 const TEMPLATE_DIR: &str = "assets/templates/";
 
@@ -153,25 +155,26 @@ pub fn launch(opts: Opts, hydra: Hydra, ldap: LDAP) -> Result<()> {
         }
     };
 
-    let static_path = Path::new(opts.base_path.as_str())
-        .join("/static/")
-        .to_str()
-        .unwrap()
-        .to_string();
+    let health_path = Path::new(opts.base_path.as_str()).join("/health/");
+    let static_path = Path::new(opts.base_path.as_str()).join("/static/");
 
     let rocket = rocket::custom(config)
         .mount(
             opts.base_path.as_str(),
-            routes![login, post_login, consent, logout, post_logout, error,],
+            routes![login, post_login, consent, logout, post_logout, error],
         )
-        .mount(static_path.as_str(), StaticFiles::from(STATIC_DIR))
+        .mount(
+            health_path.to_str().unwrap(),
+            routes![health::live, health::ready],
+        )
+        .mount(static_path.to_str().unwrap(), StaticFiles::from(STATIC_DIR))
         .register(catchers![not_found, internal_server_error])
         .manage(opts.oauth)
         .manage(hydra)
         .manage(ldap)
         .attach(Template::fairing());
 
-    // rocket.launch only exit on error
+    // rocket.launch only exits on error
     Err(anyhow!(rocket.launch()))
 }
 

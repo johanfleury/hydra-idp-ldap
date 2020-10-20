@@ -15,7 +15,6 @@
 
 use chrono::Utc;
 use log::{Metadata, Record, STATIC_MAX_LEVEL};
-use std::path::Path;
 
 pub struct Logger;
 
@@ -29,15 +28,11 @@ impl log::Log for Logger {
             return;
         }
 
-        if record.file().is_some() && record.line().is_some() {
+        if record.module_path().is_some() && record.line().is_some() {
             println!(
                 "{} - {}#{} - {} - {}",
                 Utc::now(),
-                Path::new(record.module_path().unwrap())
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap(),
+                record.module_path().unwrap(),
                 record.line().unwrap(),
                 record.level(),
                 record.args()

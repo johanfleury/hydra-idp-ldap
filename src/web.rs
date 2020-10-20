@@ -249,10 +249,10 @@ fn post_login(
         return Response::Status(Status::NotFound);
     }
 
-    let attrs = match ldap.get_user_attrs(
-        form.login.as_str(),
-        oauth_opts.attrs_map.keys().cloned().collect(),
-    ) {
+    let mut search_attrs: Vec<String> = oauth_opts.attrs_map.keys().cloned().collect();
+    search_attrs.push("+".to_string());
+
+    let attrs = match ldap.get_user_attrs(form.login.as_str(), search_attrs) {
         Ok(attrs) => attrs,
         Err(e) => {
             warn!("Unable to find user in LDAP database: {}", e);
@@ -282,7 +282,9 @@ fn post_login(
 
     match hydra.accept_login_request(
         login_challenge.clone(),
-        form.login.clone(),
+        // XXX: this line feels ugly, but I don’t know how to make it better.
+        // Problem is serde_json::Value::to_string() return a double quoted string.
+        attrs["entryUUID"].as_str().unwrap().to_string(),
         None,
         Some(context),
         None,

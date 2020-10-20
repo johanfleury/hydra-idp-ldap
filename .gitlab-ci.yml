@@ -1,17 +1,11 @@
 ---
-variables:
-  DOCKER_IMAGE_NAME: ${DOCKER_REGISTRY}/${CI_PROJECT_NAME}
-  DOCKER_HOST: tcp://docker:2376
-  DOCKER_TLS_CERTDIR: /certs
-
 services:
   - docker:19.03-dind
 
 stages:
   - test
   - build
-  - docker:build
-  - docker:publish
+  - docker
 
 .rust: &rust
   image: rust:latest
@@ -69,24 +63,18 @@ build:
     paths:
       - build
 
-docker-build:
-  stage: docker:build
+docker:
+  stage: docker
   image: docker:19.03
   only:
     - main
     - tags
-  script:
-    - docker build -t ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} .
-    - if [ -n "${CI_COMMIT_TAG}" ]; then docker tag ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} ${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}; fi
-
-docker-push:
-  stage: docker:publish
-  image: docker:19.03
-  only:
-    - main
-    - tags
+  variables:
+    DOCKER_IMAGE_NAME: ${DOCKER_REGISTRY}/${CI_PROJECT_NAME}
   before_script:
     - docker login -u ${DOCKER_REGISTRY_USER} -p ${DOCKER_REGISTRY_PASSWORD} ${DOCKER_REGISTRY}
   script:
+    - docker build -t ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - if [ -n "${CI_COMMIT_TAG}" ]; then docker tag ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA} ${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}; fi
     - docker push ${DOCKER_IMAGE_NAME}:${CI_COMMIT_SHA}
     - if [ -n "${CI_COMMIT_TAG}" ]; then docker push ${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}; fi

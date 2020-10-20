@@ -22,7 +22,7 @@ use rocket::response::Redirect;
 use rocket::{Request, State};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
-use serde_json::Value;
+use serde_json::{from_value, json, Value};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::Path;
@@ -217,8 +217,15 @@ fn login(login_challenge: String, hydra: State<Hydra>) -> Response {
     };
 
     if r.skip {
-        return match hydra.accept_login_request(login_challenge, r.subject, None, None, None, None)
-        {
+        return match hydra.accept_login_request(
+            login_challenge,
+            r.subject,
+            None,
+            Some(r.context),
+            None,
+            None,
+            None,
+        ) {
             Ok(r) => Response::Redirect(Redirect::to(r.redirect_to)),
             Err(e) => {
                 warn!("unable to accept login request: {}", e);
@@ -270,10 +277,14 @@ fn post_login(
         }
     };
 
+    let mut context: HashMap<String, Value> = HashMap::new();
+    context.insert("attrs".to_string(), json!(attrs));
+
     match hydra.accept_login_request(
         login_challenge.clone(),
         form.login.clone(),
         None,
+        Some(context),
         None,
         form.remember,
         Some(oauth_opts.login_remember_for),
@@ -297,7 +308,6 @@ fn consent(
     consent_challenge: String,
     oauth_opts: State<OauthOpts>,
     hydra: State<Hydra>,
-    ldap: State<LDAP>,
 ) -> Response {
     let hydra = hydra.clone();
 
@@ -313,18 +323,12 @@ fn consent(
         }
     };
 
-    let attrs = match ldap.get_user_attrs(
-        r.subject.as_str(),
-        oauth_opts.attrs_map.keys().cloned().collect(),
-    ) {
-        Ok(attrs) => attrs,
-        Err(e) => {
-            warn!("Unable to find user in LDAP database: {}", e);
-            return Response::Template(render_login_template(Some(
-                "Invalid login or password.".to_string(),
-            )));
-        }
-    };
+    if !r.context.contains_key("attrs") {
+        warn!("Unable to get attrs from consent request’s context.");
+        return Response::Status(Status::InternalServerError);
+    }
+
+    let attrs: HashMap<String, Value> = from_value(r.context["attrs"].clone()).unwrap();
 
     let mut claims: HashMap<String, Value> = HashMap::new();
     // The groups claim is added regardless of what scopes are requested.

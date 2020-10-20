@@ -693,9 +693,9 @@ checksum = "b6cab2627acfc432780848602f3f558f7e9dd427352224b0d9324025796d2a5e"
 
 [[package]]
 name = "hydra-client"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c52d8e83a745bb6d9e713e4845359bd6df80986eebd477863470d7bdb97cda69"
+checksum = "ea2fa51494ec1847ce516dfc1467c8585a1242772ffe654b2147c96c046732cf"
 dependencies = [
  "chrono",
  "reqwest",
